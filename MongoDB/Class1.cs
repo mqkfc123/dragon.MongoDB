@@ -7,6 +7,6 @@ using System.Threading.Tasks;
 namespace MongoDBHelper
 {
     public class Class1
-    {
+    { 
     }
 }
