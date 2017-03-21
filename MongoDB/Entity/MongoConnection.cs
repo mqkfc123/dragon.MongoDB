@@ -7,7 +7,7 @@ namespace MongoDB.Entity
 {
     [Serializable]
     public class MongoConnection : IConfigInfo
-    {
+    { 
         public MongoConnection()
         { }
         /// <summary>
