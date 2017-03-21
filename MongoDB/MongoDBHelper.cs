@@ -565,7 +565,7 @@ namespace MongoDB
             //    try
             //    {
             //        _db.Server.Connect();
-            //    }
+            //    }   
             //    catch (Exception ex)
             //    {
             //        MongoTimerAsyncHelper timerAsync = new MongoTimerAsyncHelper();
