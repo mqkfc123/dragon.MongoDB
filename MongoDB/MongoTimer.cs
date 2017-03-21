@@ -11,9 +11,7 @@ namespace MongoDB
 
     public class MongoTimer
     {
-        /// <summary>
-        ///  Timer  By 叶乐榕 2015-08-13
-        /// </summary>
+       
         //private static System.Threading.Timer timers = null;
 
         private static DateTime _cacheTime;
@@ -24,9 +22,7 @@ namespace MongoDB
 
         }
 
-        /// <summary>
-        /// 激活Timer  By 叶乐榕 2015-08-13
-        /// </summary>
+         
         //public void ActivateTimer()
         //{
         //    if (timers == null)
