@@ -13,7 +13,7 @@ namespace MongoDB.Entity
         /// <summary>
         /// 主键
         /// </summary>
-        public int Id { get; set; }
+        public int Id { get; set; } 
         /// <summary>
         /// 服务器，支持多台
         /// </summary>
