@@ -9,7 +9,7 @@ namespace MongoDB.Entity
     [Serializable]
     [XmlRoot("MongoConfig")]
     public class MongoConfig : IConfigInfo
-    {
+    { 
         public MongoConfig()
         {
 
