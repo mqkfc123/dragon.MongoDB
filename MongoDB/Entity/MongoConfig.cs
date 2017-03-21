@@ -12,7 +12,7 @@ namespace MongoDB.Entity
     { 
         public MongoConfig()
         {
-
+             
         }
         public int Id { get; set; }
         public string ConfigServerUrl { get; set; }
