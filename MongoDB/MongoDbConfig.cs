@@ -14,13 +14,14 @@ namespace MongoDB
 
         public static MongoDBHelper GetMongoDbHelper(string dbName)
         {
+            
             if (!LstDbHelper.ContainsKey(dbName))
             {
                 lock (Obj)
                 {
                     if (!LstDbHelper.ContainsKey(dbName))
                     {
-                        LstDbHelper.Add(dbName, new MongoDBHelper(new MongoDB(dbName).GetDataBase()));
+                        LstDbHelper.Add(dbName, new MongoDBHelper(new MongoFactory(dbName).CreateDatabase("")));
                     }
                     return LstDbHelper[dbName];
                 }

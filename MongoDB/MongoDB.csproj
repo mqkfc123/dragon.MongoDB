@@ -66,19 +66,17 @@
     <Compile Include="Entity\IConfigInfo.cs" />
     <Compile Include="Entity\MongoConfig.cs" />
     <Compile Include="Entity\MongoConnection.cs" />
-    <Compile Include="MongoDB.cs" />
+    <Compile Include="IMongoFactory.cs" />
     <Compile Include="MongoDbConfig.cs" />
-    <Compile Include="MongoDBFieldAttribute.cs" />
     <Compile Include="MongoDBHelper.cs" />
     <Compile Include="MongoDbModel\CacheData.cs" />
-    <Compile Include="MongoTimer.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="Util\DESHelper.cs" />
     <Compile Include="Util\FileHelper.cs" />
     <Compile Include="Util\HttpHelper.cs" />
-    <Compile Include="Util\MongoTimerAsyncHelper.cs" />
   </ItemGroup>
   <ItemGroup>
+    <None Include="log4net.config" />
     <None Include="packages.config" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
