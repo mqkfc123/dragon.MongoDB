@@ -59,11 +59,12 @@ namespace MongoDB
             }
             //账号密码
             if (CONNECT_USER_ID.Length > 0 && CONNECT_PWD.Length > 0)
+            {
                 mongoSetting.Credentials = new List<MongoCredential>()
                 {
                     MongoCredential.CreateMongoCRCredential(DB_NAME,CONNECT_USER_ID, CONNECT_PWD)
                 };
-
+            }
             var lstMongoConnHost = connection.Host.Split(new char[] { ',' });
             var lstMongoConnPort = connection.Port.Split(new char[] { ',' });
             var lstService = lstMongoConnHost.Select(
