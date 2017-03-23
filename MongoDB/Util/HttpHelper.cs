@@ -162,34 +162,7 @@ namespace MongoDB.Util
             return responseData;
         }
 
-        ///// <summary>
-        ///// 
-        ///// </summary>
-        ///// <typeparam name="T"></typeparam>
-        ///// <param name="method"></param>
-        ///// <param name="url"></param>
-        ///// <param name="args"></param>
-        ///// <param name="headers"></param>
-        ///// <param name="encoding"></param>
-        ///// <returns></returns>
-        //public static T GetResponse<T>(HttpMethod method, string url, string args = null,
-        //    IEnumerable<KeyValuePair<string, string>> headers = null, Encoding encoding = null)
-        //{
-        //    try
-        //    {
-        //        var result = GetResponse(method, url, args, headers, encoding);
-        //        return Newtonsoft.Json.JsonConvert.DeserializeObject<T>(result);
-        //    }
-        //    catch (HttpException httpEx)
-        //    {
-        //        throw httpEx;
-        //    }
-        //    catch (Exception ex)
-        //    {
-        //        throw ex;
-        //    }
-        //}
-
+    
         /// <summary>
         /// 不同于HttpUtility.UrlEncode，这个方法返回编码的特殊字符是大写的。
         /// HttpUtility.UrlEncode("=")返回值是：%3d，而这个方法则返回%3D。

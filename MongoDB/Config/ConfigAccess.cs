@@ -40,7 +40,7 @@ namespace MongoDB.Config
         /// <returns></returns>
         private static string GetPath(string configName)
         {
-            string path = System.AppDomain.CurrentDomain.BaseDirectory;
+            string path = AppDomain.CurrentDomain.BaseDirectory;
             if (!path.ToLower().Contains("bin"))
             {
                 path = path + "\\Bin\\";

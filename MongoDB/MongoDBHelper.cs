@@ -2,6 +2,7 @@
 using MongoDB.Driver;
 using MongoDB.Entity;
 using MongoDB.Util;
+using MongoDB.Util.Log4net;
 using System;
 using System.Collections.Generic;
 using System.Linq;
@@ -98,6 +99,8 @@ namespace MongoDB
 
     public class MongoDBHelper : IMongoDBHelper, IDisposable
     {
+        private static readonly ILog _Logger = LogHelper.GetLogger(typeof(MongoDBHelper));
+
         #region Field
         /// <summary>
         /// 数据库的实例
