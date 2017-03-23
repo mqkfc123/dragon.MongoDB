@@ -147,11 +147,10 @@ namespace MongoDB
                 //集合名称
                 collectionName = typeof(T).Name;
             }
-
-            IMongoCollection<BsonDocument> mc = this._db.GetCollection<BsonDocument>(collectionName);
-            //将实体转换为bson文档
+            OpenDb();
+            var mc = this._db.GetCollection<BsonDocument>(collectionName);
+            
             BsonDocument bd = t.ToBsonDocument();
-            //进行插入操作
             try
             {
                 mc.InsertOne(bd);
@@ -309,6 +308,7 @@ namespace MongoDB
             //mongoTimer.ActivateTimer();  
             var bson = _db.RunCommand<BsonDocument>(new BsonDocument() { { "serverStatus", 1 } });
 
+            var run = _db.RunCommand<BsonDocument>(new BsonDocument() { { "dbStats", 0 }, { "scale", 1 } });
             if (Config.ConfigAccess<MongoConfig>.GetConfig().TestUserPass == 1)
             {
                 try

@@ -15,7 +15,7 @@ namespace MongoTest
         {
             _db = MongoDbConfig.GetMongoDbHelper("school");
 
-            _db.Insert<School>(new School() { name = "厦门大学", stuname = "dragon" });
+            _db.Insert<School>(new School() { name = "武汉大学1", stuname = "dragon" },"school");
         }
     }
 
