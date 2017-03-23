@@ -306,15 +306,15 @@ namespace MongoDB
         private void OpenDb()
         {
             // 激活 Timer
-            //mongoTimer.ActivateTimer(); 
-            var bson = _db.RunCommand<BsonDocument>("{ serverStatus: 1 }");
+            //mongoTimer.ActivateTimer();  
+            var bson = _db.RunCommand<BsonDocument>(new BsonDocument() { { "serverStatus", 1 } });
 
             if (Config.ConfigAccess<MongoConfig>.GetConfig().TestUserPass == 1)
             {
                 try
                 {
                     // 尝试连接，测试用户名密码是否正确
-                    _db.RunCommand<BsonDocument>("{ dbStats: 1, scale: 1 }");
+                    _db.RunCommand<BsonDocument>(new BsonDocument() { { "dbStats", 1 }, { "scale", 1 } });
                 }
                 catch (Exception ex)
                 {
