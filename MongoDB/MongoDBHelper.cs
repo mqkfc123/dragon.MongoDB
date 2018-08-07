@@ -149,7 +149,7 @@ namespace MongoDB
             }
             OpenDb();
             var mc = this._db.GetCollection<BsonDocument>(collectionName);
-            
+
             BsonDocument bd = t.ToBsonDocument();
             try
             {
@@ -339,9 +339,9 @@ namespace MongoDB
         {
             throw new NotImplementedException();
         }
-       
+
     }
 
 
-  
+
 }
