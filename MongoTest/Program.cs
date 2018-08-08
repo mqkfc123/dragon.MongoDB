@@ -17,14 +17,15 @@ namespace MongoTest
             _db = MongoDbConfig.GetMongoDbHelper("school");
 
             //var sum = _db.GetDataSize<School>("school");
+            //_db.FindAll<School>("school", null);
 
             //Insert();
             //FindOne();
             //FindSortBy();
-            //FindPage();
+            FindPage();
 
             //Remove();
-            _db.Update<School>(new BsonDocument() { { "StudentId", 10002 }, { "StudentName", "dragon2" } }, new BsonDocument() { { "StudentName", "dragondragondragondragondragondragon" } }, "school");
+            _db.Update<School>(new BsonDocument() { { "StudentId", 10002 } }, new BsonDocument() { { "StudentName", "dragon2" } }, "school");
         }
 
         public static void Insert()

@@ -207,22 +207,7 @@ namespace MongoDB
                 collectionName = typeof(T).Name;
 
             var mc = this._db.GetCollection<BsonDocument>(collectionName);
-
-            //直接转化为List返回
-            if (fd == null)
-            {
-                fd = new BsonDocument() { { "_id", 0 } };
-            }
-            else
-            {
-                fd.Add("_id", 0);
-            }
-
-            FilterDefinitionBuilder<BsonDocument> builderFilter = Builders<BsonDocument>.Filter;
-            //约束条件
-            FilterDefinition<BsonDocument> filter = builderFilter.Eq("stuname", "dragon");
-            //Builders<BsonDocument>.Filter.Eq("stuname", "dragon");
-
+            var filter = this.InitQuery(fd);
             //获取数据
             var result = mc.Find<BsonDocument>(filter).ToList();
 
@@ -255,29 +240,8 @@ namespace MongoDB
                 collectionName = typeof(T).Name;
 
             var mc = this._db.GetCollection<BsonDocument>(collectionName);
-            //约束条件
-            //FilterDefinitionBuilder<BsonDocument> builderFilter = Builders<BsonDocument>.Filter;
-            //约束条件
-            //FilterDefinition<BsonDocument> filter = Builders<BsonDocument>.Filter.Eq("fieId", "value");
-            FilterDefinitionBuilder<BsonDocument> builder = Builders<BsonDocument>.Filter;
-            FilterDefinition<BsonDocument> filter = builder.Empty;
-            var fieId = "";
-            var value = "";
-            var dict = fd.ToDictionary();
-            foreach (string key in dict.Keys)
-            {
-                fieId = key;
-                value = Convert.ToString(dict[key]);
-                if (filter == builder.Empty)
-                {
-                    filter = builder.Eq(fieId, value);
-                }
-                else
-                {
-                    filter = filter & builder.Eq(fieId, value);
-                }
-            }
 
+            var filter = this.InitQuery(fd);
             //获取数据
             var result = mc.Find<BsonDocument>(filter).FirstOrDefault();
             var bsElements = result.Elements.Skip(1).Take(result.Elements.Count() - 1).ToList();
@@ -306,63 +270,10 @@ namespace MongoDB
 
             var mc = this._db.GetCollection<BsonDocument>(collectionName);
 
-            FilterDefinitionBuilder<BsonDocument> builder = Builders<BsonDocument>.Filter;
-            FilterDefinition<BsonDocument> filter = builder.Empty;
-            var fieId = "";
-            var value = "";
-            var dict = fd.ToDictionary();
-            foreach (string key in dict.Keys)
-            {
-                fieId = key;
-                value = Convert.ToString(dict[key]);
-                if (filter == builder.Empty)
-                {
-                    filter = builder.Eq(fieId, value);
-                }
-                else
-                {
-                    filter = filter & builder.Eq(fieId, value);
-                }
-            }
+            var filter = this.InitQuery(fd);
+            var sortFilter = this.InitSortBy(sortBy, fields);
 
-            #region 排序
-            SortDefinitionBuilder<BsonDocument> sortFilter = Builders<BsonDocument>.Sort;
-            SortDefinition<BsonDocument> filters = null;
-            if (sortBy.ToLower() == "asc")
-            {
-                foreach (var item in fields)
-                {
-                    if (filters == null)
-                    {
-                        filters = sortFilter.Ascending(item);
-                    }
-                    else
-                    {
-                        filters = filters.Ascending(item);
-                    }
-                }
-            }
-            else if (sortBy.ToLower() == "desc")
-            {
-                foreach (var item in fields)
-                {
-                    if (filters == null)
-                    {
-                        filters = sortFilter.Descending(item);
-                    }
-                    else
-                    {
-                        filters = filters.Descending(item);
-                    }
-                }
-            }
-            else
-            {
-                filters = sortFilter.Descending(OBJECTID_KEY);
-            }
-            #endregion
-
-            var result = mc.Find<BsonDocument>(filter).Sort(filters).ToList();
+            var result = mc.Find<BsonDocument>(filter).Sort(sortFilter).ToList();
             var list = new List<T>();
             foreach (var m in result)
             {
@@ -396,68 +307,15 @@ namespace MongoDB
                 collectionName = typeof(T).Name;
 
             var mc = this._db.GetCollection<BsonDocument>(collectionName);
-
-            FilterDefinitionBuilder<BsonDocument> builder = Builders<BsonDocument>.Filter;
-            FilterDefinition<BsonDocument> filter = builder.Empty;
-            var fieId = "";
-            var value = "";
-            var dict = fd.ToDictionary();
-            foreach (string key in dict.Keys)
-            {
-                fieId = key;
-                value = Convert.ToString(dict[key]);
-                if (filter == builder.Empty)
-                {
-                    filter = builder.Eq(fieId, value);
-                }
-                else
-                {
-                    filter = filter & builder.Eq(fieId, value);
-                }
-            }
-
-            #region 排序
-            SortDefinitionBuilder<BsonDocument> sortFilter = Builders<BsonDocument>.Sort;
-            SortDefinition<BsonDocument> filters = null;
-            if (sortBy.ToLower() == "asc")
-            {
-                foreach (var item in fields)
-                {
-                    if (filters == null)
-                    {
-                        filters = sortFilter.Ascending(item);
-                    }
-                    else
-                    {
-                        filters = filters.Ascending(item);
-                    }
-                }
-            }
-            else if (sortBy.ToLower() == "desc")
-            {
-                foreach (var item in fields)
-                {
-                    if (filters == null)
-                    {
-                        filters = sortFilter.Descending(item);
-                    }
-                    else
-                    {
-                        filters = filters.Descending(item);
-                    }
-                }
-            }
-            else
-            {
-                filters = sortFilter.Descending(OBJECTID_KEY);
-            }
-            #endregion
+             
+            var filter = this.InitQuery(fd);
+            var sortFilter = this.InitSortBy(sortBy, fields);
 
             //如页序号为0时初始化为1
             pageIndex = pageIndex == 0 ? 1 : pageIndex;
             //按条件查询 排序 跳数 取数
             var result = mc.Find<BsonDocument>(filter)
-                .Sort(filters)
+                .Sort(sortFilter)
                 .Skip((pageIndex - 1) * pageSize)
                 .Limit(pageSize)
                 .ToList(); 
@@ -492,24 +350,7 @@ namespace MongoDB
 
             var mc = this._db.GetCollection<BsonDocument>(collectionName);
 
-            FilterDefinitionBuilder<BsonDocument> builder = Builders<BsonDocument>.Filter;
-            FilterDefinition<BsonDocument> filter = builder.Empty;
-            var fieId = "";
-            var value = "";
-            var dict = fd.ToDictionary();
-            foreach (string key in dict.Keys)
-            {
-                fieId = key;
-                value = Convert.ToString(dict[key]);
-                if (filter == builder.Empty)
-                {
-                    filter = builder.Eq(fieId, value);
-                }
-                else
-                {
-                    filter = filter & builder.Eq(fieId, value);
-                }
-            }
+            var filter = this.InitQuery(fd);
 
             UpdateDefinitionBuilder<BsonDocument> up_builder = Builders<BsonDocument>.Update;
             UpdateDefinition<BsonDocument> up_filter = null;
@@ -543,24 +384,7 @@ namespace MongoDB
 
             var mc = this._db.GetCollection<BsonDocument>(collectionName);
 
-            FilterDefinitionBuilder<BsonDocument> builder = Builders<BsonDocument>.Filter;
-            FilterDefinition<BsonDocument> filter = builder.Empty;
-            var fieId = "";
-            var value = "";
-            var dict = fd.ToDictionary();
-            foreach (string key in dict.Keys)
-            {
-                fieId = key;
-                value = Convert.ToString(dict[key]);
-                if (filter == builder.Empty)
-                {
-                    filter = builder.Eq(fieId, value);
-                }
-                else
-                {
-                    filter = filter & builder.Eq(fieId, value);
-                }
-            }
+            var filter = this.InitQuery(fd);
             //根据指定查询移除数据
             var result = mc.DeleteOne(filter);
         }
@@ -593,15 +417,42 @@ namespace MongoDB
         /// </summary>
         /// <param name="query">查询的条件</param>
         /// <returns></returns>
-        private FilterDefinition<BsonDocument> InitQuery(FilterDefinition<BsonDocument> query)
+        private FilterDefinition<BsonDocument> InitQuery(BsonDocument query)
         {
+            //约束条件
+            //FilterDefinitionBuilder<BsonDocument> builderFilter = Builders<BsonDocument>.Filter;
+            //约束条件
+            //FilterDefinition<BsonDocument> filter = Builders<BsonDocument>.Filter.Eq("fieId", "value");
+            FilterDefinitionBuilder<BsonDocument> builder = Builders<BsonDocument>.Filter;
+            FilterDefinition<BsonDocument> filter = builder.Empty;
+
             if (query == null)
             {
                 //当查询为空时 附加恒真的条件 类似SQL：1=1的语法
                 //new BsonDocument() { { "_id", 0 } }
-                query = Builders<BsonDocument>.Filter.Eq(OBJECTID_KEY, 0);
+                filter = Builders<BsonDocument>.Filter.Eq(OBJECTID_KEY, 0);
             }
-            return query;
+            else
+            {
+                var fieId = "";
+                var value = "";
+                var dict = query.ToDictionary();
+                foreach (string key in dict.Keys)
+                {
+                    fieId = key;
+                    value = Convert.ToString(dict[key]);
+                    if (filter == builder.Empty)
+                    {
+                        filter = builder.Eq(fieId, value);
+                    }
+                    else
+                    {
+                        filter = filter & builder.Eq(fieId, value);
+                    }
+                }
+            }
+
+            return filter;
         }
 
         /// <summary>
@@ -609,14 +460,51 @@ namespace MongoDB
         /// </summary>
         /// <param name="sortBy"></param>
         /// <returns></returns>
-        private SortDefinition<BsonDocument> InitSortBy(SortDefinition<BsonDocument> sortBy)
+        private SortDefinition<BsonDocument> InitSortBy(string sortBy, params string[] fields)
         {
+            SortDefinitionBuilder<BsonDocument> sortBuilder = Builders<BsonDocument>.Sort;
+            SortDefinition<BsonDocument> sortFilter = null;
             if (sortBy == null)
             {
                 //默认ObjectId 递增
-                var sortBys = Builders<BsonDocument>.Sort.Descending(OBJECTID_KEY); // new BsonDocument(OBJECTID_KEY, 1);
+                 sortFilter = Builders<BsonDocument>.Sort.Descending(OBJECTID_KEY); // new BsonDocument(OBJECTID_KEY, 1);
             }
-            return sortBy;
+            else
+            {
+                if (sortBy.ToLower() == "asc")
+                {
+                    foreach (var item in fields)
+                    {
+                        if (sortFilter == null)
+                        {
+                            sortFilter = sortBuilder.Ascending(item);
+                        }
+                        else
+                        {
+                            sortFilter = sortFilter.Ascending(item);
+                        }
+                    }
+                }
+                else if (sortBy.ToLower() == "desc")
+                {
+                    foreach (var item in fields)
+                    {
+                        if (sortFilter == null)
+                        {
+                            sortFilter = sortBuilder.Descending(item);
+                        }
+                        else
+                        {
+                            sortFilter = sortFilter.Descending(item);
+                        }
+                    }
+                }
+                else
+                {
+                    sortFilter = sortFilter.Descending(OBJECTID_KEY);
+                }
+            }
+            return sortFilter;
         }
 
         private void OpenDb()
@@ -624,7 +512,6 @@ namespace MongoDB
             // 激活 Timer
             //mongoTimer.ActivateTimer();  
             var bson = _db.RunCommand<BsonDocument>(new BsonDocument() { { "serverStatus", 1 } });
-
             var run = _db.RunCommand<BsonDocument>(new BsonDocument() { { "dbStats", 0 }, { "scale", 1 } });
             if (Config.ConfigAccess<MongoConfig>.GetConfig().TestUserPass == 1)
             {
