@@ -3,8 +3,10 @@ using MongoDB.Driver;
 using MongoDB.Entity;
 using MongoDB.Util;
 using MongoDB.Util.Log4net;
+using Newtonsoft.Json;
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.Linq;
 using System.Text;
 using System.Threading.Tasks;
@@ -46,30 +48,31 @@ namespace MongoDB
         /// <param name="query">查询的条件 可以为空</param>
         /// <param name="collectionName">去指定查询的集合</param>
         /// <returns>返回一个实体类型</returns>
-        FilterDefinition<BsonDocument> FindOne<T>(FilterDefinition<BsonDocument> query, string collectionName = "");
+        T FindOne<T>(BsonDocument fd, string collectionName = "");
 
         /// <summary>
         /// 根据指定条件查询集合中的数据
         /// </summary>
         /// <typeparam name="T">该集合数据的所属类型</typeparam>
-        /// <param name="query">指定的查询条件 比如Query.And(Query.EQ("username","admin"),Query.EQ("password":"admin"))</param>
+        /// <param name="fd">指定的查询条件 </param>
         /// <param name="collectionName">指定的集合的名称</param>
         /// <param name="sortBy"></param>
         /// <param name="fields"></param>
         /// <returns>返回一个List列表</returns>
-        List<BsonDocument> Find<T>(FilterDefinition<BsonDocument> query, string collectionName, SortDefinition<BsonDocument> sortBy = null, string[] fields = null);
+        IEnumerable<T> Find<T>(BsonDocument fd, string collectionName, string sortBy = null, params string[] fields);
 
         /// <summary>
         /// 分页查询 PageIndex和PageSize模式  在页数PageIndex大的情况下 效率明显变低
         /// </summary>
         /// <typeparam name="T">所需查询的数据的实体类型</typeparam>
-        /// <param name="query">查询的条件</param>
+        /// <param name="fd">查询的条件</param>
         /// <param name="pageIndex">当前的页数</param>
         /// <param name="pageSize">当前的尺寸</param>
-        /// <param name="sortBy">排序方式</param>
         /// <param name="collectionName">集合名称</param>
+        /// <param name="sortBy">排序方式</param>
+        /// <param name="fields">排序方式</param>
         /// <returns>返回List列表</returns>
-        List<BsonDocument> Find<T>(FilterDefinition<BsonDocument> query, int pageIndex, int pageSize, BsonDocument sortBy, string collectionName);
+        IEnumerable<T> Find<T>(BsonDocument fd, int pageIndex, int pageSize, string collectionName, string sortBy = null, params string[] fields);
 
         /// <summary>
         /// 更新数据
@@ -78,7 +81,7 @@ namespace MongoDB
         /// <param name="query">更新数据的查询</param>
         /// <param name="update">需要更新的文档</param>
         /// <param name="collectionName">指定更新集合的名称</param>
-        bool Update<T>(FilterDefinition<BsonDocument> query, UpdateDefinition<BsonDocument> update, string collectionName);
+        bool Update<T>(BsonDocument fd, BsonDocument update, string collectionName);
 
         /// <summary>
         /// 移除指定的数据
@@ -86,7 +89,7 @@ namespace MongoDB
         /// <typeparam name="T">移除的数据类型</typeparam>
         /// <param name="query">移除的数据条件</param>
         /// <param name="collectionName">指定的集合名词</param>
-        void Remove<T>(FilterDefinition<BsonDocument> query, string collectionName);
+        void Remove<T>(BsonDocument fd, string collectionName);
 
         /// <summary>
         /// 获取集合的存储大小
@@ -140,6 +143,12 @@ namespace MongoDB
             return _db;
         }
 
+        /// <summary>
+        /// 插入单条数据
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="t"></param>
+        /// <param name="collectionName"></param>
         public void Insert<T>(T t, string collectionName = "")
         {
             if (string.IsNullOrEmpty(collectionName))
@@ -161,6 +170,12 @@ namespace MongoDB
             }
         }
 
+        /// <summary>
+        /// 插入集合数据
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="list"></param>
+        /// <param name="collectionName"></param>
         public void Insert<T>(IEnumerable<T> list, string collectionName = "")
         {
             if (string.IsNullOrEmpty(collectionName))
@@ -178,13 +193,20 @@ namespace MongoDB
             mc.InsertMany(bsonList);
         }
 
+        /// <summary>
+        /// 查询一个集合中的所有数据
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="collectionName"></param>
+        /// <param name="fd"></param>
+        /// <returns></returns>
         public IEnumerable<T> FindAll<T>(string collectionName = "", BsonDocument fd = null)
         {
 
             if (string.IsNullOrEmpty(collectionName))
                 collectionName = typeof(T).Name;
 
-            var mc = this._db.GetCollection<T>(collectionName);
+            var mc = this._db.GetCollection<BsonDocument>(collectionName);
 
             //直接转化为List返回
             if (fd == null)
@@ -196,75 +218,352 @@ namespace MongoDB
                 fd.Add("_id", 0);
             }
 
-            //以实体方式取出其数据集合  
-            return mc.Find(fd).ToList();
-        }
+            FilterDefinitionBuilder<BsonDocument> builderFilter = Builders<BsonDocument>.Filter;
+            //约束条件
+            FilterDefinition<BsonDocument> filter = builderFilter.Eq("stuname", "dragon");
+            //Builders<BsonDocument>.Filter.Eq("stuname", "dragon");
 
-        public FilterDefinition<BsonDocument> FindOne<T>(FilterDefinition<BsonDocument> query, string collectionName = "")
-        {
-            if (string.IsNullOrEmpty(collectionName))
+            //获取数据
+            var result = mc.Find<BsonDocument>(filter).ToList();
+
+            var list = new List<T>();
+            foreach (var m in result)
             {
-                collectionName = typeof(T).Name;
+                var bsElements = m.Elements.Skip(1).Take(m.Elements.Count() - 1).ToList();
+                var bsDocs = new BsonDocument();
+                for (int i = 0; i < bsElements.Count(); i++)
+                {
+                    bsDocs.SetElement(bsElements[i]);
+                }
+                string json = bsDocs.ToJson();
+                var user = JsonConvert.DeserializeObject<T>(json);
+                list.Add(user);
             }
-            var mc = this._db.GetCollection<BsonDocument>(collectionName);
-            query = this.InitQuery(query);
-            var t = mc.Find(query).FirstOrDefault();
-            return t;
+            return list.ToArray();
         }
 
-        public List<BsonDocument> Find<T>(FilterDefinition<BsonDocument> query, string collectionName, SortDefinition<BsonDocument> sortBy = null, string[] fields = null)
+        /// <summary>
+        /// 查询单个实体
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="query"></param>
+        /// <param name="collectionName"></param>
+        /// <returns></returns>
+        public T FindOne<T>(BsonDocument fd, string collectionName = "")
         {
             if (string.IsNullOrEmpty(collectionName))
                 collectionName = typeof(T).Name;
 
             var mc = this._db.GetCollection<BsonDocument>(collectionName);
-            query = this.InitQuery(query);
-            if (sortBy == null)
-                sortBy = this.InitSortBy(sortBy);
+            //约束条件
+            //FilterDefinitionBuilder<BsonDocument> builderFilter = Builders<BsonDocument>.Filter;
+            //约束条件
+            //FilterDefinition<BsonDocument> filter = Builders<BsonDocument>.Filter.Eq("fieId", "value");
+            FilterDefinitionBuilder<BsonDocument> builder = Builders<BsonDocument>.Filter;
+            FilterDefinition<BsonDocument> filter = builder.Empty;
+            var fieId = "";
+            var value = "";
+            var dict = fd.ToDictionary();
+            foreach (string key in dict.Keys)
+            {
+                fieId = key;
+                value = Convert.ToString(dict[key]);
+                if (filter == builder.Empty)
+                {
+                    filter = builder.Eq(fieId, value);
+                }
+                else
+                {
+                    filter = filter & builder.Eq(fieId, value);
+                }
+            }
 
-            //MongoCursor<T> mongoCursor = mc.Find(query);
-            //var sort = Builders<BsonDocument>.Sort.Ascending("borough").Ascending("address.zipcode");
-            var result = mc.Find(query).Sort(sortBy).ToList();
-            return result;
+            //获取数据
+            var result = mc.Find<BsonDocument>(filter).FirstOrDefault();
+            var bsElements = result.Elements.Skip(1).Take(result.Elements.Count() - 1).ToList();
+            var bsDoc = new BsonDocument();
+            for (int i = 0; i < bsElements.Count(); i++)
+            {
+                bsDoc.SetElement(bsElements[i]);
+            }
+            string json = bsDoc.ToJson();
+            return JsonConvert.DeserializeObject<T>(json);
         }
 
-        public List<BsonDocument> Find<T>(FilterDefinition<BsonDocument> query, int pageIndex, int pageSize, BsonDocument sortBy, string collectionName)
+        /// <summary>
+        /// 根据指定条件查询集合中的数据
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="query"></param>
+        /// <param name="collectionName"></param>
+        /// <param name="sortBy"></param>
+        /// <param name="fields"></param>
+        /// <returns></returns>
+        public IEnumerable<T> Find<T>(BsonDocument fd, string collectionName, string sortBy = null, params string[] fields)
         {
             if (string.IsNullOrEmpty(collectionName))
                 collectionName = typeof(T).Name;
 
             var mc = this._db.GetCollection<BsonDocument>(collectionName);
-            query = this.InitQuery(query);
-            var sortBys = this.InitSortBy(sortBy);
+
+            FilterDefinitionBuilder<BsonDocument> builder = Builders<BsonDocument>.Filter;
+            FilterDefinition<BsonDocument> filter = builder.Empty;
+            var fieId = "";
+            var value = "";
+            var dict = fd.ToDictionary();
+            foreach (string key in dict.Keys)
+            {
+                fieId = key;
+                value = Convert.ToString(dict[key]);
+                if (filter == builder.Empty)
+                {
+                    filter = builder.Eq(fieId, value);
+                }
+                else
+                {
+                    filter = filter & builder.Eq(fieId, value);
+                }
+            }
+
+            #region 排序
+            SortDefinitionBuilder<BsonDocument> sortFilter = Builders<BsonDocument>.Sort;
+            SortDefinition<BsonDocument> filters = null;
+            if (sortBy.ToLower() == "asc")
+            {
+                foreach (var item in fields)
+                {
+                    if (filters == null)
+                    {
+                        filters = sortFilter.Ascending(item);
+                    }
+                    else
+                    {
+                        filters = filters.Ascending(item);
+                    }
+                }
+            }
+            else if (sortBy.ToLower() == "desc")
+            {
+                foreach (var item in fields)
+                {
+                    if (filters == null)
+                    {
+                        filters = sortFilter.Descending(item);
+                    }
+                    else
+                    {
+                        filters = filters.Descending(item);
+                    }
+                }
+            }
+            else
+            {
+                filters = sortFilter.Descending(OBJECTID_KEY);
+            }
+            #endregion
+
+            var result = mc.Find<BsonDocument>(filter).Sort(filters).ToList();
+            var list = new List<T>();
+            foreach (var m in result)
+            {
+                var bsElements = m.Elements.Skip(1).Take(m.Elements.Count() - 1).ToList();
+                var bsDocs = new BsonDocument();
+                for (int i = 0; i < bsElements.Count(); i++)
+                {
+                    bsDocs.SetElement(bsElements[i]);
+                }
+                string json = bsDocs.ToJson();
+                var user = JsonConvert.DeserializeObject<T>(json);
+                list.Add(user);
+            }
+            return list.ToArray();
+        }
+
+        /// <summary>
+        /// 分页查询
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="fd"></param>
+        /// <param name="pageIndex"></param>
+        /// <param name="pageSize"></param>
+        /// <param name="collectionName"></param>
+        /// <param name="sortBy"></param>
+        /// <param name="fields"></param>
+        /// <returns></returns>
+        public IEnumerable<T> Find<T>(BsonDocument fd, int pageIndex, int pageSize, string collectionName, string sortBy = null, params string[] fields)
+        {
+            if (string.IsNullOrEmpty(collectionName))
+                collectionName = typeof(T).Name;
+
+            var mc = this._db.GetCollection<BsonDocument>(collectionName);
+
+            FilterDefinitionBuilder<BsonDocument> builder = Builders<BsonDocument>.Filter;
+            FilterDefinition<BsonDocument> filter = builder.Empty;
+            var fieId = "";
+            var value = "";
+            var dict = fd.ToDictionary();
+            foreach (string key in dict.Keys)
+            {
+                fieId = key;
+                value = Convert.ToString(dict[key]);
+                if (filter == builder.Empty)
+                {
+                    filter = builder.Eq(fieId, value);
+                }
+                else
+                {
+                    filter = filter & builder.Eq(fieId, value);
+                }
+            }
+
+            #region 排序
+            SortDefinitionBuilder<BsonDocument> sortFilter = Builders<BsonDocument>.Sort;
+            SortDefinition<BsonDocument> filters = null;
+            if (sortBy.ToLower() == "asc")
+            {
+                foreach (var item in fields)
+                {
+                    if (filters == null)
+                    {
+                        filters = sortFilter.Ascending(item);
+                    }
+                    else
+                    {
+                        filters = filters.Ascending(item);
+                    }
+                }
+            }
+            else if (sortBy.ToLower() == "desc")
+            {
+                foreach (var item in fields)
+                {
+                    if (filters == null)
+                    {
+                        filters = sortFilter.Descending(item);
+                    }
+                    else
+                    {
+                        filters = filters.Descending(item);
+                    }
+                }
+            }
+            else
+            {
+                filters = sortFilter.Descending(OBJECTID_KEY);
+            }
+            #endregion
+
             //如页序号为0时初始化为1
             pageIndex = pageIndex == 0 ? 1 : pageIndex;
             //按条件查询 排序 跳数 取数
-            var mongoCursor = mc.Find(query).Sort(sortBy).Skip((pageIndex - 1) * pageSize).Limit(pageSize);
-            return mongoCursor.ToList<BsonDocument>();
+            var result = mc.Find<BsonDocument>(filter)
+                .Sort(filters)
+                .Skip((pageIndex - 1) * pageSize)
+                .Limit(pageSize)
+                .ToList(); 
+            var list = new List<T>();
+            foreach (var m in result)
+            {
+                var bsElements = m.Elements.Skip(1).Take(m.Elements.Count() - 1).ToList();
+                var bsDocs = new BsonDocument();
+                for (int i = 0; i < bsElements.Count(); i++)
+                {
+                    bsDocs.SetElement(bsElements[i]);
+                }
+                string json = bsDocs.ToJson();
+                var user = JsonConvert.DeserializeObject<T>(json);
+                list.Add(user);
+            }
+            return list.ToArray();
         }
 
-        public bool Update<T>(FilterDefinition<BsonDocument> query, UpdateDefinition<BsonDocument> update, string collectionName)
+        /// <summary>
+        /// 更新数据
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="query"></param>
+        /// <param name="update"></param>
+        /// <param name="collectionName"></param>
+        /// <returns></returns>
+        public bool Update<T>(BsonDocument fd, BsonDocument update, string collectionName)
         {
             if (string.IsNullOrEmpty(collectionName))
                 collectionName = typeof(T).Name;
 
             var mc = this._db.GetCollection<BsonDocument>(collectionName);
 
-            query = this.InitQuery(query);
+            FilterDefinitionBuilder<BsonDocument> builder = Builders<BsonDocument>.Filter;
+            FilterDefinition<BsonDocument> filter = builder.Empty;
+            var fieId = "";
+            var value = "";
+            var dict = fd.ToDictionary();
+            foreach (string key in dict.Keys)
+            {
+                fieId = key;
+                value = Convert.ToString(dict[key]);
+                if (filter == builder.Empty)
+                {
+                    filter = builder.Eq(fieId, value);
+                }
+                else
+                {
+                    filter = filter & builder.Eq(fieId, value);
+                }
+            }
+
+            UpdateDefinitionBuilder<BsonDocument> up_builder = Builders<BsonDocument>.Update;
+            UpdateDefinition<BsonDocument> up_filter = null;
+            var up_fieId = "";
+            var up_value = "";
+            var up_dict = fd.ToDictionary();
+            foreach (string key in up_dict.Keys)
+            {
+                up_fieId = key;
+                up_value = Convert.ToString(dict[key]);
+                if (filter == builder.Empty)
+                {
+                    //up_filter = up_builder.Combine(UpdateDefinitionBuilder(doc, null));
+                }
+            }
+
             //更新数据
-            var result = mc.UpdateOne(query, update);
+            var result = mc.UpdateOne(filter, update);
             return result.IsAcknowledged;
         }
 
-        public void Remove<T>(FilterDefinition<BsonDocument> query, string collectionName)
+        /// <summary>
+        /// 移除
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="query"></param>
+        /// <param name="collectionName"></param>
+        public void Remove<T>(BsonDocument fd, string collectionName)
         {
             if (string.IsNullOrEmpty(collectionName))
                 collectionName = typeof(T).Name;
 
             var mc = this._db.GetCollection<BsonDocument>(collectionName);
-            query = this.InitQuery(query);
+
+            FilterDefinitionBuilder<BsonDocument> builder = Builders<BsonDocument>.Filter;
+            FilterDefinition<BsonDocument> filter = builder.Empty;
+            var fieId = "";
+            var value = "";
+            var dict = fd.ToDictionary();
+            foreach (string key in dict.Keys)
+            {
+                fieId = key;
+                value = Convert.ToString(dict[key]);
+                if (filter == builder.Empty)
+                {
+                    filter = builder.Eq(fieId, value);
+                }
+                else
+                {
+                    filter = filter & builder.Eq(fieId, value);
+                }
+            }
             //根据指定查询移除数据
-            var writeConcernResult = mc.DeleteOne(query);
+            var result = mc.DeleteOne(filter);
         }
 
         #endregion
@@ -318,12 +617,19 @@ namespace MongoDB
                 }
                 catch (Exception ex)
                 {
+                    _Logger.Error("MongoDBHelper OpenDb() 异常：", ex);
                 }
             }
         }
 
         #endregion
 
+        /// <summary>
+        /// 查询集合总数， 不建议使用，效率慢
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="collectionName"></param>
+        /// <returns></returns>
         public long GetDataSize<T>(string collectionName)
         {
 
@@ -331,8 +637,11 @@ namespace MongoDB
                 collectionName = typeof(T).Name;
 
             var mc = this._db.GetCollection<BsonDocument>(collectionName);
-            //return mc.GetTotalStorageSize();
-            return 0;
+            FilterDefinitionBuilder<BsonDocument> builder = Builders<BsonDocument>.Filter;
+            FilterDefinition<BsonDocument> filter = builder.Empty;
+ 
+            var result = mc.Find<BsonDocument>(filter).ToList().Count();
+            return result;
         }
 
         public void Dispose()
