@@ -515,19 +515,18 @@ namespace MongoDB
             UpdateDefinition<BsonDocument> up_filter = null;
             var up_fieId = "";
             var up_value = "";
-            var up_dict = fd.ToDictionary();
+            var up_dict = update.ToDictionary();
             foreach (string key in up_dict.Keys)
             {
                 up_fieId = key;
-                up_value = Convert.ToString(dict[key]);
-                if (filter == builder.Empty)
+                up_value = Convert.ToString(up_dict[key]);
+                if (up_filter == null)
                 {
-                    //up_filter = up_builder.Combine(UpdateDefinitionBuilder(doc, null));
+                    up_filter = up_builder.Set(f => f[key], up_value);
                 }
             }
-
             //更新数据
-            var result = mc.UpdateOne(filter, update);
+            var result = mc.UpdateOne(filter, up_filter);
             return result.IsAcknowledged;
         }
 
@@ -564,6 +563,25 @@ namespace MongoDB
             }
             //根据指定查询移除数据
             var result = mc.DeleteOne(filter);
+        }
+
+        /// <summary>
+        /// 查询集合总数， 不建议使用，效率慢
+        /// </summary>
+        /// <typeparam name="T"></typeparam>
+        /// <param name="collectionName"></param>
+        /// <returns></returns>
+        public long GetDataSize<T>(string collectionName)
+        {
+            if (string.IsNullOrEmpty(collectionName))
+                collectionName = typeof(T).Name;
+
+            var mc = this._db.GetCollection<BsonDocument>(collectionName);
+            FilterDefinitionBuilder<BsonDocument> builder = Builders<BsonDocument>.Filter;
+            FilterDefinition<BsonDocument> filter = builder.Empty;
+
+            var result = mc.Find<BsonDocument>(filter).ToList().Count();
+            return result;
         }
 
         #endregion
@@ -624,33 +642,12 @@ namespace MongoDB
 
         #endregion
 
-        /// <summary>
-        /// 查询集合总数， 不建议使用，效率慢
-        /// </summary>
-        /// <typeparam name="T"></typeparam>
-        /// <param name="collectionName"></param>
-        /// <returns></returns>
-        public long GetDataSize<T>(string collectionName)
-        {
-
-            if (string.IsNullOrEmpty(collectionName))
-                collectionName = typeof(T).Name;
-
-            var mc = this._db.GetCollection<BsonDocument>(collectionName);
-            FilterDefinitionBuilder<BsonDocument> builder = Builders<BsonDocument>.Filter;
-            FilterDefinition<BsonDocument> filter = builder.Empty;
- 
-            var result = mc.Find<BsonDocument>(filter).ToList().Count();
-            return result;
-        }
-
         public void Dispose()
         {
             throw new NotImplementedException();
         }
 
+
     }
-
-
 
 }
