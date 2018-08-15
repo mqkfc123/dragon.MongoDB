@@ -22,7 +22,7 @@ namespace MongoTest
             //Insert();
             //FindOne();
             //FindSortBy();
-            FindPage();
+            FindPage(); 
 
             //Remove();
             _db.Update<School>(new BsonDocument() { { "StudentId", 10002 } }, new BsonDocument() { { "StudentName", "dragon2" } }, "school");
